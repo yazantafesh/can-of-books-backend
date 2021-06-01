@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const PORT = process.env.PORT;
 
@@ -89,7 +90,9 @@ function seedUserCollection() {
 // seedUserCollection();
 
 app.get('/', homePageHandler);
-app.get('/books',getBooksHandler);
+app.get('/books', getBooksHandler);
+app.post('/addBooks', addBooksHandler);
+app.delete('/deleteBook/:index', deleteBooksHandler);
 
 function homePageHandler(req, res) {
     res.send('You are on the homepage')
@@ -102,13 +105,52 @@ function getBooksHandler(req,res) {
         if(err) {
             console.log('did not work')
         } else {
-            console.log(userData)
-            console.log(userData[0])
-            console.log(userData[0].books)
+            // console.log(userData)
+            // console.log(userData[0])
+            // console.log(userData[0].books)
             res.send(userData[0].books)
         }
     })
 }
+
+function addBooksHandler(req, res){
+
+    const {name, description, img, email} = req.body;
+    console.log(name);
+
+    UserModel.find({email:email}, (error, userData)=>{
+        if(error){
+            res.send('did not work')
+        } else{
+            userData[0].books.push({
+                name: name,
+                description: description,
+                img: img
+            })
+            userData[0].save();
+            res.send(userData[0].books)
+        }
+    })
+}
+
+function deleteBooksHandler(req, res) {
+    const {email} = req.query;
+
+    const index = Number(req.params.index)
+
+    UserModel.find({email:email}, (error, userData)=>{
+        const newBookArr = userData[0].books.filter((book,idx)=>{
+            if (idx !== index) {
+                return book;
+            }
+        })
+        userData[0].books = newBookArr;
+        userData[0].save();
+        res.send(userData[0].books);
+    })
+}
+
+
 
 app.listen(PORT, () => {
     console.log(`Listening on PORT ${PORT}`)
