@@ -11,7 +11,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT;
 
-mongoose.connect('mongodb://localhost:27017/books',
+mongoose.connect(process.env.MONGODB_URI,
     { useNewUrlParser: true, useUnifiedTopology: true });
 
 
@@ -93,6 +93,7 @@ app.get('/', homePageHandler);
 app.get('/books', getBooksHandler);
 app.post('/addBooks', addBooksHandler);
 app.delete('/deleteBook/:index', deleteBooksHandler);
+app.put('/updateBook/:index', updateBooksHandler)
 
 function homePageHandler(req, res) {
     res.send('You are on the homepage')
@@ -147,6 +148,24 @@ function deleteBooksHandler(req, res) {
         userData[0].books = newBookArr;
         userData[0].save();
         res.send(userData[0].books);
+    })
+}
+
+function updateBooksHandler (req, res){
+    const {name, description, img, email} = req.body;
+
+    const index = Number(req.params.index);
+
+    UserModel.findOne({email:email}, (error, userData)=>{
+    userData.books[index]={
+        name: name,
+        description: description,
+        img: img
+    }
+
+    userData.save();
+    res.send(userData.books);    
+
     })
 }
 
